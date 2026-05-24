@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  LogOut,
   MessageSquarePlus,
   Moon,
   Sun,
@@ -189,6 +190,19 @@ export function Sidebar({
             onThemeChange?.(next as "light" | "dark" | "system");
           }}
         />
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start gap-2"
+          onClick={async () => {
+            await fetch("/api/auth/logout", { method: "POST" });
+            window.location.href = "/login";
+          }}
+        >
+          <LogOut className="size-4" />
+          Sign out
+        </Button>
       </div>
     </aside>
   );
