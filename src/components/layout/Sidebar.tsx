@@ -1,5 +1,6 @@
 "use client";
 
+import { useMounted } from "@/hooks/useMounted";
 import {
   LogOut,
   MessageSquarePlus,
@@ -152,9 +153,7 @@ export function Sidebar({
                   onClick={() => onSelectConversation(conv.id)}
                 >
                   <span className="block truncate">{conv.title}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {formatRelativeTime(conv.updatedAt)}
-                  </span>
+                  <RelativeTime timestamp={conv.updatedAt} />
                 </button>
                 <Button
                   type="button"
@@ -215,11 +214,29 @@ function ThemeToggle({
   theme?: string;
   setTheme: (theme: string) => void;
 }) {
+  const mounted = useMounted();
+
   const cycle = () => {
     if (theme === "light") setTheme("dark");
     else if (theme === "dark") setTheme("system");
     else setTheme("light");
   };
+
+  if (!mounted) {
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="w-full justify-start gap-2"
+        disabled
+        aria-hidden
+      >
+        <Monitor className="size-4" />
+        Theme
+      </Button>
+    );
+  }
 
   const Icon =
     theme === "dark" ? Moon : theme === "light" ? Sun : Monitor;
@@ -237,6 +254,18 @@ function ThemeToggle({
       <Icon className="size-4" />
       Theme: {label}
     </Button>
+  );
+}
+
+function RelativeTime({ timestamp }: { timestamp: number }) {
+  const mounted = useMounted();
+  if (!mounted) {
+    return <span className="text-xs text-muted-foreground">—</span>;
+  }
+  return (
+    <span className="text-xs text-muted-foreground">
+      {formatRelativeTime(timestamp)}
+    </span>
   );
 }
 
