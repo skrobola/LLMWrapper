@@ -8,5 +8,6 @@ export const DEFAULT_SETTINGS = {
   theme: "system" as const,
   lastProviderId: "anthropic",
   lastModelId: "claude-sonnet-4-6",
+  customInstructions: "",
   customProviders: [],
 };

@@ -7,6 +7,7 @@ import type {
   ChatMessage,
   Conversation,
 } from "@/lib/providers/types";
+import { applyCustomInstructions } from "@/lib/chat/instructions";
 import { getApiKey } from "@/lib/storage/keys";
 import { loadConversations } from "@/lib/storage/conversations";
 
@@ -77,12 +78,16 @@ export function useChat({
       const freshConversation = loadConversations().find(
         (c) => c.id === conversation.id,
       );
-      const messagesForApi = (
+      const conversationMessages = (
         freshConversation?.messages ?? [userMessage]
       ).filter(
         (m) =>
           m.id !== assistantMessage.id &&
           m.content.trim().length > 0,
+      );
+      const messagesForApi = applyCustomInstructions(
+        conversationMessages,
+        settings.customInstructions,
       );
 
       const controller = new AbortController();
@@ -132,6 +137,7 @@ export function useChat({
       appendMessage,
       createConversation,
       isStreaming,
+      settings.customInstructions,
       settings.customProviders,
       updateMessageContent,
     ],
