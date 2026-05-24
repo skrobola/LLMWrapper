@@ -61,5 +61,7 @@ export interface AppSettings {
   theme: "light" | "dark" | "system";
   lastProviderId: ProviderId;
   lastModelId: string;
+  /** Persistent system prompt sent with every chat (ChatGPT-style custom instructions). */
+  customInstructions: string;
   customProviders: CustomProviderConfig[];
 }

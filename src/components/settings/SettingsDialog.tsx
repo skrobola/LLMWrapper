@@ -13,6 +13,7 @@ import {
 import type { CustomProviderConfig, ProviderDefinition } from "@/lib/providers/types";
 import { ApiKeyForm } from "./ApiKeyForm";
 import { AddProviderDialog } from "./AddProviderDialog";
+import { CustomInstructionsForm } from "./CustomInstructionsForm";
 import { Separator } from "@/components/ui/separator";
 
 interface SettingsDialogProps {
@@ -22,6 +23,8 @@ interface SettingsDialogProps {
   onSaveKey: (providerId: string, value: string) => void;
   onAddProvider: (provider: CustomProviderConfig) => void;
   onRemoveProvider: (id: string) => void;
+  customInstructions: string;
+  onSaveCustomInstructions: (value: string) => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   showTrigger?: boolean;
@@ -34,6 +37,8 @@ export function SettingsDialog({
   onSaveKey,
   onAddProvider,
   onRemoveProvider,
+  customInstructions,
+  onSaveCustomInstructions,
   open,
   onOpenChange,
   showTrigger = true,
@@ -59,6 +64,13 @@ export function SettingsDialog({
             persisted on the server.
           </DialogDescription>
         </DialogHeader>
+
+        <CustomInstructionsForm
+          value={customInstructions}
+          onSave={onSaveCustomInstructions}
+        />
+
+        <Separator className="my-4" />
 
         <ApiKeyForm providers={providers} keys={keys} onSave={onSaveKey} />
 

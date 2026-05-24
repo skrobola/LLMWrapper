@@ -19,6 +19,7 @@ export function AppShell() {
     setTheme: persistTheme,
     addCustomProvider,
     removeCustomProvider,
+    setCustomInstructions,
   } = useSettings();
   const { keys, updateKey, hasKey } = useProviderKeys();
   const {
@@ -123,6 +124,8 @@ export function AppShell() {
         onSaveKey={updateKey}
         onAddProvider={addCustomProvider}
         onRemoveProvider={removeCustomProvider}
+        customInstructions={settings.customInstructions}
+        onSaveCustomInstructions={setCustomInstructions}
         settingsOpen={settingsOpen}
         onSettingsOpenChange={setSettingsOpen}
         onThemeChange={persistTheme}

@@ -40,6 +40,8 @@ interface SidebarProps {
   onSaveKey: (providerId: string, value: string) => void;
   onAddProvider: (provider: CustomProviderConfig) => void;
   onRemoveProvider: (id: string) => void;
+  customInstructions: string;
+  onSaveCustomInstructions: (value: string) => void;
   settingsOpen?: boolean;
   onSettingsOpenChange?: (open: boolean) => void;
   onThemeChange?: (theme: "light" | "dark" | "system") => void;
@@ -61,6 +63,8 @@ export function Sidebar({
   onSaveKey,
   onAddProvider,
   onRemoveProvider,
+  customInstructions,
+  onSaveCustomInstructions,
   settingsOpen,
   onSettingsOpenChange,
   onThemeChange,
@@ -179,6 +183,8 @@ export function Sidebar({
           onSaveKey={onSaveKey}
           onAddProvider={onAddProvider}
           onRemoveProvider={onRemoveProvider}
+          customInstructions={customInstructions}
+          onSaveCustomInstructions={onSaveCustomInstructions}
           open={settingsOpen}
           onOpenChange={onSettingsOpenChange}
         />

@@ -58,10 +58,18 @@ export function useSettings() {
     [persist],
   );
 
+  const setCustomInstructions = useCallback(
+    (customInstructions: string) => {
+      persist({ ...loadSettings(), customInstructions });
+    },
+    [persist],
+  );
+
   return {
     settings,
     setTheme,
     setLastProvider,
+    setCustomInstructions,
     addCustomProvider,
     removeCustomProvider,
     persist,
