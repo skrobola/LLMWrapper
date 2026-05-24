@@ -14,10 +14,25 @@ A minimalist universal AI chat web app built with Next.js, TypeScript, and Tailw
 
 ```bash
 npm install
+cp .env.example .env.local
+# Edit .env.local: set SITE_PASSWORD and AUTH_SECRET
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000), open **Settings**, and paste API keys for the providers you use.
+Open [http://localhost:3000](http://localhost:3000), sign in with your site password, then open **Settings** and paste API keys for the providers you use.
+
+## Password protection
+
+The app requires a shared site password before anyone can use the chat UI or call `/api/chat`. Configure these environment variables:
+
+| Variable | Description |
+|----------|-------------|
+| `SITE_PASSWORD` | Password users enter on the login page |
+| `AUTH_SECRET` | Random string (16+ chars) used to sign session cookies |
+
+**Vercel:** Project → Settings → Environment Variables → add both for Production, then redeploy.
+
+Without these variables, visitors are redirected to `/login` and API requests return `401` / `503`.
 
 ## API keys
 
