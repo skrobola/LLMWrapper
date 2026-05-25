@@ -1,9 +1,17 @@
 rules_version = '2';
 
+// Replace with the same Gmail you set in NEXT_PUBLIC_FIREBASE_ALLOWED_EMAIL.
+// Firestore cannot read env vars; this must match your allowed account.
+function isAllowedCloudUser() {
+  return request.auth != null
+    && request.auth.token.email == 'you@gmail.com';
+}
+
 service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{userId}/conversations/{conversationId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isAllowedCloudUser()
+        && request.auth.uid == userId;
     }
   }
 }

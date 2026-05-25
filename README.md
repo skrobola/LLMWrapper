@@ -61,7 +61,9 @@ Project settings → **Your apps** → add **Web** app → copy the config value
 
 ### 3. Firestore security rules
 
-In Firestore → **Rules**, paste the contents of [`firestore.rules`](firestore.rules) so users can only read/write their own chats.
+In Firestore → **Rules**, paste the contents of [`firestore.rules`](firestore.rules). Replace `you@gmail.com` in that file with your Google address, and set the same address in `.env.local` as `NEXT_PUBLIC_FIREBASE_ALLOWED_EMAIL`. Together, the app and Firestore block every other Google account from using cloud sync (even if someone has your site password).
+
+If you omit `NEXT_PUBLIC_FIREBASE_ALLOWED_EMAIL`, any Google account can sign in, but each user still only sees their own chats under `/users/{uid}/`.
 
 ### 4. Authorized domains
 

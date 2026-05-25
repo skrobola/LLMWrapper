@@ -8,6 +8,7 @@ import {
   signOut as firebaseSignOut,
   type User,
 } from "firebase/auth";
+import { isEmailAllowedForCloudSync } from "@/lib/firebase/allowed-email";
 import { getFirebaseAuth, isFirebaseConfigured } from "@/lib/firebase/config";
 import { migrateLocalConversationsToFirestore } from "@/lib/firebase/migrate";
 
@@ -26,6 +27,13 @@ export function useFirebaseAuth() {
     const auth = getFirebaseAuth();
     const unsubscribe = onAuthStateChanged(auth, async (nextUser) => {
       setError(null);
+      if (nextUser && !isEmailAllowedForCloudSync(nextUser.email)) {
+        await firebaseSignOut(auth);
+        setUser(null);
+        setError("This Google account is not allowed to use cloud sync.");
+        setLoading(false);
+        return;
+      }
       if (nextUser) {
         try {
           await migrateLocalConversationsToFirestore(nextUser.uid);
@@ -49,7 +57,11 @@ export function useFirebaseAuth() {
     setError(null);
     const auth = getFirebaseAuth();
     const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+    const credential = await signInWithPopup(auth, provider);
+    if (!isEmailAllowedForCloudSync(credential.user.email)) {
+      await firebaseSignOut(auth);
+      throw new Error("This Google account is not allowed to use cloud sync.");
+    }
   }, [configured]);
 
   const signOut = useCallback(async () => {
