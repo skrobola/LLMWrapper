@@ -87,9 +87,16 @@ export function CloudSyncPanel({
       )}
 
       {error && (
-        <p className="text-xs text-destructive" role="alert">
-          {error}
-        </p>
+        <div className="space-y-1 text-xs text-destructive" role="alert">
+          <p>{error}</p>
+          {/permission/i.test(error) && (
+            <p className="text-muted-foreground">
+              In Firebase Console → Firestore → Rules, set the allowed email to
+              match <span className="font-medium text-foreground">{user?.email}</span>{" "}
+              and click Publish.
+            </p>
+          )}
+        </div>
       )}
     </div>
   );

@@ -67,7 +67,14 @@ If you omit `NEXT_PUBLIC_FIREBASE_ALLOWED_EMAIL`, any Google account can sign in
 
 ### 4. Authorized domains
 
-Authentication → **Settings** → **Authorized domains** → add your production domain (and `localhost` for dev).
+Authentication → **Settings** → **Authorized domains** → add every host where the app runs:
+
+- `localhost` (included by default)
+- Your production host, e.g. `mcswrapper.vercel.app` (no `https://` prefix)
+
+If Google sign-in works locally but fails on Vercel with `auth/unauthorized-domain`, this list is missing the Vercel hostname. Preview URLs like `my-app-abc123.vercel.app` are separate domains—add each one you use, or test cloud sync on the main production URL only.
+
+Also set the same `NEXT_PUBLIC_FIREBASE_*` (and optional `NEXT_PUBLIC_FIREBASE_ALLOWED_EMAIL`) variables in the Vercel project **Environment Variables** for Production.
 
 ### 5. Use in the app
 
