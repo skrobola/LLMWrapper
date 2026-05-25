@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTheme } from "next-themes";
 import { resolveProviders } from "@/lib/providers/registry";
 import { useConversations } from "@/hooks/useConversations";
+import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
 import { useProviderKeys } from "@/hooks/useProviderKeys";
 import { useSettings } from "@/hooks/useSettings";
 import { useChat } from "@/hooks/useChat";
@@ -22,15 +23,33 @@ export function AppShell() {
   } = useSettings();
   const { keys, updateKey, hasKey } = useProviderKeys();
   const {
+    user: firebaseUser,
+    loading: firebaseLoading,
+    error: firebaseError,
+    configured: firebaseConfigured,
+    signInWithGoogle,
+    signOut: signOutFirebase,
+    isSignedIn: useCloud,
+  } = useFirebaseAuth();
+
+  const {
     conversations,
     activeId,
     activeConversation,
+    ready: conversationsReady,
+    cloudError,
     setActiveId,
     createConversation,
     deleteConversation,
     appendMessage,
     updateMessageContent,
-  } = useConversations();
+    setStreamingConversationId,
+    flushConversation,
+    getConversationById,
+  } = useConversations({
+    firebaseUser,
+    firebaseReady: !firebaseLoading,
+  });
 
   const providers = useMemo(
     () => resolveProviders(settings.customProviders),
@@ -55,12 +74,23 @@ export function AppShell() {
     applyTheme(settings.theme);
   }, [settings.theme, applyTheme]);
 
+  useEffect(() => {
+    if (cloudError) toast.error(cloudError);
+  }, [cloudError]);
+
+  useEffect(() => {
+    if (firebaseError) toast.error(firebaseError);
+  }, [firebaseError]);
+
   const { sendMessage, stop, isStreaming, error, setError } = useChat({
     settings,
     activeConversation,
     createConversation,
     appendMessage,
     updateMessageContent,
+    getConversationById,
+    setStreamingConversationId,
+    flushConversation,
   });
 
   useEffect(() => {
@@ -97,6 +127,30 @@ export function AppShell() {
     setError,
   ]);
 
+  const handleFirebaseSignIn = useCallback(async () => {
+    try {
+      await signInWithGoogle();
+      toast.success("Signed in — chats will sync to the cloud");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not sign in with Google",
+      );
+    }
+  }, [signInWithGoogle]);
+
+  const handleFirebaseSignOut = useCallback(async () => {
+    await signOutFirebase();
+    toast.message("Cloud sync off — chats saved on this device only");
+  }, [signOutFirebase]);
+
+  if (!conversationsReady) {
+    return (
+      <div className="flex h-screen items-center justify-center text-sm text-muted-foreground">
+        Loading conversations...
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar
@@ -107,6 +161,7 @@ export function AppShell() {
         activeConversationId={activeId}
         keys={keys}
         customProviders={settings.customProviders}
+        useCloud={useCloud}
         onProviderChange={handleProviderChange}
         onModelChange={handleModelChange}
         onNewChat={handleNewChat}
@@ -123,6 +178,12 @@ export function AppShell() {
         onSaveKey={updateKey}
         onAddProvider={addCustomProvider}
         onRemoveProvider={removeCustomProvider}
+        firebaseConfigured={firebaseConfigured}
+        firebaseLoading={firebaseLoading}
+        firebaseUser={firebaseUser}
+        firebaseError={firebaseError}
+        onFirebaseSignIn={handleFirebaseSignIn}
+        onFirebaseSignOut={handleFirebaseSignOut}
         settingsOpen={settingsOpen}
         onSettingsOpenChange={setSettingsOpen}
         onThemeChange={persistTheme}

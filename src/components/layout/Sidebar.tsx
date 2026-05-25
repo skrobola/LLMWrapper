@@ -1,6 +1,9 @@
 "use client";
 
+import { useMounted } from "@/hooks/useMounted";
+import type { User } from "firebase/auth";
 import {
+  Cloud,
   MessageSquarePlus,
   Moon,
   Sun,
@@ -38,6 +41,13 @@ interface SidebarProps {
   onSaveKey: (providerId: string, value: string) => void;
   onAddProvider: (provider: CustomProviderConfig) => void;
   onRemoveProvider: (id: string) => void;
+  useCloud: boolean;
+  firebaseConfigured: boolean;
+  firebaseLoading: boolean;
+  firebaseUser: User | null;
+  firebaseError: string | null;
+  onFirebaseSignIn: () => Promise<void>;
+  onFirebaseSignOut: () => Promise<void>;
   settingsOpen?: boolean;
   onSettingsOpenChange?: (open: boolean) => void;
   onThemeChange?: (theme: "light" | "dark" | "system") => void;
@@ -59,6 +69,13 @@ export function Sidebar({
   onSaveKey,
   onAddProvider,
   onRemoveProvider,
+  useCloud,
+  firebaseConfigured,
+  firebaseLoading,
+  firebaseUser,
+  firebaseError,
+  onFirebaseSignIn,
+  onFirebaseSignOut,
   settingsOpen,
   onSettingsOpenChange,
   onThemeChange,
@@ -70,7 +87,15 @@ export function Sidebar({
     <aside className="flex h-full w-[280px] shrink-0 flex-col border-r border-border bg-sidebar text-sidebar-foreground">
       <div className="border-b border-sidebar-border px-4 py-4">
         <h1 className="text-base font-semibold tracking-tight">LLM Wrapper</h1>
-        <p className="text-xs text-muted-foreground">Universal AI chat</p>
+        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          Universal AI chat
+          {useCloud && (
+            <span className="inline-flex items-center gap-0.5 text-green-600 dark:text-green-400">
+              <Cloud className="size-3" />
+              Synced
+            </span>
+          )}
+        </p>
       </div>
 
       <div className="space-y-3 border-b border-sidebar-border p-3">
@@ -151,9 +176,7 @@ export function Sidebar({
                   onClick={() => onSelectConversation(conv.id)}
                 >
                   <span className="block truncate">{conv.title}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {formatRelativeTime(conv.updatedAt)}
-                  </span>
+                  <RelativeTime timestamp={conv.updatedAt} />
                 </button>
                 <Button
                   type="button"
@@ -179,6 +202,13 @@ export function Sidebar({
           onSaveKey={onSaveKey}
           onAddProvider={onAddProvider}
           onRemoveProvider={onRemoveProvider}
+          firebaseConfigured={firebaseConfigured}
+          firebaseLoading={firebaseLoading}
+          firebaseUser={firebaseUser}
+          firebaseError={firebaseError}
+          useCloud={useCloud}
+          onFirebaseSignIn={onFirebaseSignIn}
+          onFirebaseSignOut={onFirebaseSignOut}
           open={settingsOpen}
           onOpenChange={onSettingsOpenChange}
         />
@@ -201,11 +231,29 @@ function ThemeToggle({
   theme?: string;
   setTheme: (theme: string) => void;
 }) {
+  const mounted = useMounted();
+
   const cycle = () => {
     if (theme === "light") setTheme("dark");
     else if (theme === "dark") setTheme("system");
     else setTheme("light");
   };
+
+  if (!mounted) {
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="w-full justify-start gap-2"
+        disabled
+        aria-hidden
+      >
+        <Monitor className="size-4" />
+        Theme
+      </Button>
+    );
+  }
 
   const Icon =
     theme === "dark" ? Moon : theme === "light" ? Sun : Monitor;
@@ -223,6 +271,18 @@ function ThemeToggle({
       <Icon className="size-4" />
       Theme: {label}
     </Button>
+  );
+}
+
+function RelativeTime({ timestamp }: { timestamp: number }) {
+  const mounted = useMounted();
+  if (!mounted) {
+    return <span className="text-xs text-muted-foreground">—</span>;
+  }
+  return (
+    <span className="text-xs text-muted-foreground">
+      {formatRelativeTime(timestamp)}
+    </span>
   );
 }
 

@@ -11,8 +11,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import type { CustomProviderConfig, ProviderDefinition } from "@/lib/providers/types";
+import type { User } from "firebase/auth";
 import { ApiKeyForm } from "./ApiKeyForm";
 import { AddProviderDialog } from "./AddProviderDialog";
+import { CloudSyncPanel } from "./CloudSyncPanel";
 import { Separator } from "@/components/ui/separator";
 
 interface SettingsDialogProps {
@@ -22,6 +24,13 @@ interface SettingsDialogProps {
   onSaveKey: (providerId: string, value: string) => void;
   onAddProvider: (provider: CustomProviderConfig) => void;
   onRemoveProvider: (id: string) => void;
+  firebaseConfigured: boolean;
+  firebaseLoading: boolean;
+  firebaseUser: User | null;
+  firebaseError: string | null;
+  useCloud: boolean;
+  onFirebaseSignIn: () => Promise<void>;
+  onFirebaseSignOut: () => Promise<void>;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   showTrigger?: boolean;
@@ -34,6 +43,13 @@ export function SettingsDialog({
   onSaveKey,
   onAddProvider,
   onRemoveProvider,
+  firebaseConfigured,
+  firebaseLoading,
+  firebaseUser,
+  firebaseError,
+  useCloud,
+  onFirebaseSignIn,
+  onFirebaseSignOut,
   open,
   onOpenChange,
   showTrigger = true,
@@ -59,6 +75,18 @@ export function SettingsDialog({
             persisted on the server.
           </DialogDescription>
         </DialogHeader>
+
+        <CloudSyncPanel
+          configured={firebaseConfigured}
+          loading={firebaseLoading}
+          user={firebaseUser}
+          error={firebaseError}
+          useCloud={useCloud}
+          onSignIn={onFirebaseSignIn}
+          onSignOut={onFirebaseSignOut}
+        />
+
+        <Separator className="my-4" />
 
         <ApiKeyForm providers={providers} keys={keys} onSave={onSaveKey} />
 
