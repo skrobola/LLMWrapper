@@ -1,7 +1,9 @@
 "use client";
 
 import { useMounted } from "@/hooks/useMounted";
+import type { User } from "firebase/auth";
 import {
+  Cloud,
   LogOut,
   MessageSquarePlus,
   Moon,
@@ -42,6 +44,13 @@ interface SidebarProps {
   onRemoveProvider: (id: string) => void;
   customInstructions: string;
   onSaveCustomInstructions: (value: string) => void;
+  useCloud: boolean;
+  firebaseConfigured: boolean;
+  firebaseLoading: boolean;
+  firebaseUser: User | null;
+  firebaseError: string | null;
+  onFirebaseSignIn: () => Promise<void>;
+  onFirebaseSignOut: () => Promise<void>;
   settingsOpen?: boolean;
   onSettingsOpenChange?: (open: boolean) => void;
   onThemeChange?: (theme: "light" | "dark" | "system") => void;
@@ -65,6 +74,13 @@ export function Sidebar({
   onRemoveProvider,
   customInstructions,
   onSaveCustomInstructions,
+  useCloud,
+  firebaseConfigured,
+  firebaseLoading,
+  firebaseUser,
+  firebaseError,
+  onFirebaseSignIn,
+  onFirebaseSignOut,
   settingsOpen,
   onSettingsOpenChange,
   onThemeChange,
@@ -76,7 +92,15 @@ export function Sidebar({
     <aside className="flex h-full w-[280px] shrink-0 flex-col border-r border-border bg-sidebar text-sidebar-foreground">
       <div className="border-b border-sidebar-border px-4 py-4">
         <h1 className="text-base font-semibold tracking-tight">LLM Wrapper</h1>
-        <p className="text-xs text-muted-foreground">Universal AI chat</p>
+        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          Universal AI chat
+          {useCloud && (
+            <span className="inline-flex items-center gap-0.5 text-green-600 dark:text-green-400">
+              <Cloud className="size-3" />
+              Synced
+            </span>
+          )}
+        </p>
       </div>
 
       <div className="space-y-3 border-b border-sidebar-border p-3">
@@ -185,6 +209,13 @@ export function Sidebar({
           onRemoveProvider={onRemoveProvider}
           customInstructions={customInstructions}
           onSaveCustomInstructions={onSaveCustomInstructions}
+          firebaseConfigured={firebaseConfigured}
+          firebaseLoading={firebaseLoading}
+          firebaseUser={firebaseUser}
+          firebaseError={firebaseError}
+          useCloud={useCloud}
+          onFirebaseSignIn={onFirebaseSignIn}
+          onFirebaseSignOut={onFirebaseSignOut}
           open={settingsOpen}
           onOpenChange={onSettingsOpenChange}
         />

@@ -2,14 +2,13 @@
 
 import { useCallback, useRef, useState } from "react";
 import { streamChatRequest } from "@/lib/chat/stream-client";
+import { applyCustomInstructions } from "@/lib/chat/instructions";
 import type {
   AppSettings,
   ChatMessage,
   Conversation,
 } from "@/lib/providers/types";
-import { applyCustomInstructions } from "@/lib/chat/instructions";
 import { getApiKey } from "@/lib/storage/keys";
-import { loadConversations } from "@/lib/storage/conversations";
 
 interface UseChatOptions {
   settings: AppSettings;
@@ -24,6 +23,9 @@ interface UseChatOptions {
     messageId: string,
     content: string,
   ) => void;
+  getConversationById: (id: string) => Conversation | undefined;
+  setStreamingConversationId: (id: string | null) => void;
+  flushConversation: (conversationId: string) => Promise<void>;
 }
 
 export function useChat({
@@ -32,16 +34,37 @@ export function useChat({
   createConversation,
   appendMessage,
   updateMessageContent,
+  getConversationById,
+  setStreamingConversationId,
+  flushConversation,
 }: UseChatOptions) {
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const streamingConversationIdRef = useRef<string | null>(null);
+
+  const finishStream = useCallback(
+    async (conversationId: string) => {
+      setIsStreaming(false);
+      abortRef.current = null;
+      setStreamingConversationId(null);
+      streamingConversationIdRef.current = null;
+      await flushConversation(conversationId);
+    },
+    [flushConversation, setStreamingConversationId],
+  );
 
   const stop = useCallback(() => {
+    const conversationId = streamingConversationIdRef.current;
     abortRef.current?.abort();
     abortRef.current = null;
     setIsStreaming(false);
-  }, []);
+    setStreamingConversationId(null);
+    streamingConversationIdRef.current = null;
+    if (conversationId) {
+      void flushConversation(conversationId);
+    }
+  }, [flushConversation, setStreamingConversationId]);
 
   const sendMessage = useCallback(
     async (content: string, providerId: string, model: string) => {
@@ -65,6 +88,12 @@ export function useChat({
         conversation = createConversation(providerId, model);
       }
 
+      const priorMessages = (
+        getConversationById(conversation.id)?.messages ??
+        conversation.messages ??
+        []
+      ).filter((m) => m.content.trim().length > 0);
+
       const userMessage = appendMessage(conversation.id, {
         role: "user",
         content: trimmed,
@@ -75,23 +104,20 @@ export function useChat({
         content: "",
       });
 
-      const freshConversation = loadConversations().find(
-        (c) => c.id === conversation.id,
-      );
-      const conversationMessages = (
-        freshConversation?.messages ?? [userMessage]
-      ).filter(
-        (m) =>
-          m.id !== assistantMessage.id &&
-          m.content.trim().length > 0,
-      );
       const messagesForApi = applyCustomInstructions(
-        conversationMessages,
+        [...priorMessages, userMessage],
         settings.customInstructions,
       );
 
+      if (messagesForApi.length === 0) {
+        setError("Could not prepare messages for the API. Please try again.");
+        return;
+      }
+
       const controller = new AbortController();
       abortRef.current = controller;
+      streamingConversationIdRef.current = conversation.id;
+      setStreamingConversationId(conversation.id);
       setIsStreaming(true);
 
       let accumulated = "";
@@ -113,7 +139,7 @@ export function useChat({
               accumulated,
             );
           },
-          onError: (message) => {
+          onError: async (message) => {
             setError(message);
             if (!accumulated) {
               updateMessageContent(
@@ -122,11 +148,10 @@ export function useChat({
                 `Error: ${message}`,
               );
             }
-            setIsStreaming(false);
+            await finishStream(conversation!.id);
           },
-          onDone: () => {
-            setIsStreaming(false);
-            abortRef.current = null;
+          onDone: async () => {
+            await finishStream(conversation!.id);
           },
         },
         controller.signal,
@@ -136,7 +161,10 @@ export function useChat({
       activeConversation,
       appendMessage,
       createConversation,
+      finishStream,
+      getConversationById,
       isStreaming,
+      setStreamingConversationId,
       settings.customInstructions,
       settings.customProviders,
       updateMessageContent,

@@ -6,7 +6,7 @@ A minimalist universal AI chat web app built with Next.js, TypeScript, and Tailw
 
 - Sidebar to pick provider and model
 - Streaming chat with markdown, syntax highlighting, and copy buttons
-- Conversation history stored in your browser (`localStorage`)
+- Conversation history in `localStorage`, with optional **Firebase Firestore** sync across devices
 - API keys stored locally and sent only with each chat request (proxied through Next.js API routes to avoid CORS)
 - Add custom providers (OpenAI-compatible, Anthropic, or Gemini format)
 
@@ -45,6 +45,32 @@ Without these variables, visitors are redirected to `/login` and API requests re
 
 Keys are saved under `llm-wrapper:keys:v1` in localStorage. They are not written to the server filesystem.
 
+## Cloud chat history (Firebase)
+
+Sync conversations across devices with Google sign-in and Firestore.
+
+### 1. Create a Firebase project
+
+1. Go to [Firebase Console](https://console.firebase.google.com/) → **Add project**
+2. Enable **Authentication** → **Sign-in method** → enable **Google**
+3. Enable **Firestore Database** → create database (production mode is fine)
+
+### 2. Register a web app
+
+Project settings → **Your apps** → add **Web** app → copy the config values into `.env.local` (see `.env.example`).
+
+### 3. Firestore security rules
+
+In Firestore → **Rules**, paste the contents of [`firestore.rules`](firestore.rules) so users can only read/write their own chats.
+
+### 4. Authorized domains
+
+Authentication → **Settings** → **Authorized domains** → add your production domain (and `localhost` for dev).
+
+### 5. Use in the app
+
+Open **Settings** → **Cloud chat history** → **Sign in with Google**. Existing local chats are uploaded once on first sign-in. API keys stay on each device; only chat history syncs.
+
 ## Adding a built-in provider
 
 1. Create an adapter in `src/lib/providers/` implementing `ProviderDefinition`.
@@ -82,6 +108,7 @@ src/
   app/api/chat/route.ts    # Streaming proxy
   lib/providers/           # Provider adapters
   lib/storage/             # localStorage helpers
+  lib/firebase/            # Firestore sync
   components/              # UI
   hooks/                   # Chat and persistence hooks
 ```
